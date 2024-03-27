@@ -1,0 +1,185 @@
+const express=require('express')
+const app=express()
+app.use(logger)
+
+app.get('/',(req,res)=>{
+    res.send('Home Page')
+})
+
+app.get('/users',auth,(req,res)=>{
+    console.log(`User is admin= ${req.admin}`)
+    res.send('Users Page')
+})
+
+function logger(req,res,next){
+    console.log(req.originalUrl)
+    next()
+}
+function auth(req,res,next){
+    //http://localhost:3003/users?admin=true
+    if (req.query.admin === 'true'){
+        req.admin=true
+        next()
+    }else{
+        res.send('No auth')
+    }
+}
+
+app.listen(3003)
+
+
+
+
+
+
+
+
+npm init
+npm install express ejs stripe --save
+npm install dotenv --save-dev
+
+
+***START
+
+const express=require('express')
+const app = express()
+
+app.set('view engine','ejs')
+app.use(express.static('public'))
+
+app.listen(3004)
+___________________________________________________
+**********IMP
+
+==>create --items.json:-
+
+{
+    "music":[
+        {
+            "id":1,
+            "name":"Album 1",
+            "price":1299,
+            "imgName":"Album 1.png"
+        },
+        {
+            "id":2,
+            "name":"Album 2",
+            "price":1499,
+            "imgName":"Album 2.png"
+        },
+        {
+            "id":3,
+            "name":"Album 3",
+            "price":1999,
+            "imgName":"Album 3.png"
+        },
+        {
+            "id":4,
+            "name":"Album 4",
+            "price":1499,
+            "imgName":"Album 4.png"
+        }
+    ],
+    "merch":[
+        {
+            "id":5,
+            "name":"T-Shirt",
+            "price":1999,
+            "imgName":"Shirt.png"
+        },
+        {
+            "id":6,
+            "name":"Coffee Cup",
+            "price":699,
+            "imgName":"Coffee.png"
+        }
+    ]
+}
+
+==>add route in SERVER.js
+
+app.get('/store',function(req,res){
+    fs.readFile('items.json',function(error,data){
+        if (error){
+            res.status(500).end()
+        }else{
+            res.render('store.ejs',{
+                items:JSON.parse(data)
+            })
+        }
+    })
+})
+
+==>  in Store.ejs:-
+<section class="container content-section">
+            <h2 class="section-header">MUSIC</h2>
+            <div class="shop-items">
+
+                <% items.music.forEach(function(item){ %>
+                    <div class="shop-item" data-item-id="<%= item.id%>">
+                        <span class="shop-item-title"><%= item.name %></span>
+                        <img class="shop-item-image" src="Images/<%= item.imgName %>">
+                        <div class="shop-item-details">
+                            <span class="shop-item-price">$<%= item.price /100 %></span>
+                            <button class="btn btn-primary shop-item-button" type="button">ADD TO CART</button>
+                        </div>
+                    </div>
+                <% }) %>
+                
+        </section>
+        <section class="container content-section">
+            <h2 class="section-header">MERCH</h2>
+            <div class="shop-items">
+                <div class="shop-item">
+
+                <% items.merch.forEach(function(mer){%>    
+                    <span class="shop-item-title"><%= mer.name%></span>
+                    <img class="shop-item-image" src="Images/<%= mer.imgName%>">
+                    <div class="shop-item-details">
+                        <span class="shop-item-price">$<%= mer.price /100 %></span>
+                        <button class="btn btn-primary shop-item-button" type="button">ADD TO CART</button>
+                    </div>
+                <%})%>
+                </div>
+        </section>
+
+_________________________________________________________________________________________________________________________________________
+
+API creation:-
+-->server.js:-
+
+const stripePublicKey = process.env.STRIPE_PUBLIC_KEY
+res.render('store.ejs',{
+                stripePublicKey:stripePublicKey,
+                items:JSON.parse(data)
+})
+
+-->store.ejs:-
+
+<script src="https://checkout.stripe.com/checkout.js" defer></script>
+<script src="store.js" defer></script>
+<script>
+    var stripePublicKey = '<%= stripePublicKey%>'
+</script>
+
+-->store.js:-
+
+var stripeHandler = StripeCheckout.configure({
+    key: stripePublicKey,
+    locale:'en',
+    token:function(token){
+        
+    }
+})
+
+function purchaseClicked() {
+    var priceElement=document.getElementsByClassName('cart-total-price')[0]
+    var price=parseFloat(priceElement.innerText.replace('$',''))*100
+    stripeHandler.open({
+        amount:price
+    })
+}
+
+
+
+
